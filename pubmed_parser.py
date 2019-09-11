@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 import os
 import re
+from nltk.corpus import stopwords
+
 from tqdm import tqdm
 
-def get_hotwords(hotwords, title, abstract):
+def get_hotwords(hotwords, stop_words, title, abstract):
     # clean up data
     chars = set(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
     
     text = " ".join([title, abstract])
     text = text.split()
-
+    
     clean_words = []
     for word in text:
         word_out = "".join([letter for letter in word if letter in chars])
-        clean_words.append(word_out)
+        if word_out not in stop_words:
+            clean_words.append(word_out)
 
-    clean_words = " ".join(clean_words)
+    clean_words = "".join(clean_words)
 
     hotwords_out = []
     for hotword in hotwords:
@@ -25,7 +28,7 @@ def get_hotwords(hotwords, title, abstract):
     return hotwords_out
 
 
-def parse_doc(doc, hotwords):
+def parse_doc(doc, hotwords, stop_words):
     article_start = re.compile(r"\s*<PubmedArticle>")
     article_stop = re.compile(r"\s*</PubmedArticle>")
     pmid = re.compile(r"\s*<PMID.*>(\d*)</PMID>")
@@ -33,7 +36,7 @@ def parse_doc(doc, hotwords):
     mesh_list_stop = re.compile(r"\s*</MeshHeadingList>")
     mesh_term_id = re.compile(r'\s*<DescriptorName UI="(D\d+)".*>')
     journal_start = re.compile(r"\s*<Journal>")
-    journal_stop = re.compile(r"\s*</Journal")
+    journal_stop = re.compile(r"\s*</Journal>")
     journal_name = re.compile(r"\s*<Title>(.+)</Title")
     article_title = re.compile(r"\s*<ArticleTitle>(.+)</ArticleTitle")
     abstract_start = re.compile(r"\s*<Abstract>")
@@ -51,9 +54,9 @@ def parse_doc(doc, hotwords):
         line = handle.readline()
         while line:
             if article_start.search(line):
-                if doc_pmid and title and abstract:
+                if doc_pmid:
                     if edna.search(title) or edna.search(abstract):
-                        hotwords_out = get_hotwords(hotwords, title, abstract)
+                        hotwords_out = get_hotwords(hotwords, stop_words, title, abstract)
                         yield (doc_pmid, journal, hotwords_out)
                     # reset vars
                     doc_pmid = ""
@@ -92,14 +95,24 @@ def parse_doc(doc, hotwords):
             line = handle.readline()
 
 def main():
+    stop_words = set(stopwords.words("english"))
+    
     hotwords = []
     with open("clean_org_list", "r") as handle:
         for line in handle:
-            line = line.strip("\n")
-            hotwords.append(line)
+            hotwords.append(line.strip("\n"))
+
+    countries = []
+    with open("countries", "r") as handle:
+        for line in handle:
+            countries.append(line.strip("\n"))
+    hotwords.extend(countries)
+
     hotwords.extend(["soil", "16S", "18S", "metabarcoding", "barcoding", "COI",
                     "sediment", "saltwater", "freshwater", "ice", "glacial",
-                    "floodplain"])
+                    "floodplain", "water", "PCR", "biodiversity", "high-throughput sequencing",
+                    "mammals", "fish", "amphibians", "birds", "bryophytes", "arthropods",
+                    "copepods", "plants", "terrestrial"])
     hotwords = set(hotwords)
 
     docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")
@@ -107,7 +120,7 @@ def main():
 
     with open("relevant_metadata", "w") as out:
         for doc in tqdm(docs_list[:200]):
-            for doc_metadata in parse_doc(doc, hotwords):
+            for doc_metadata in parse_doc(doc, hotwords, stop_words):
                 doc_hotwords = ",".join(doc_metadata[2])
                 out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_hotwords]))
                 out.write("\n")
