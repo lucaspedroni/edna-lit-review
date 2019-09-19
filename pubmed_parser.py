@@ -19,7 +19,7 @@ def get_hotwords(hotword_regexes, stop_words, title, abstract):
         if word_out not in stop_words:
             clean_words.append(word_out)
 
-    clean_words = "".join(clean_words)
+    clean_words = " ".join(clean_words)
 
     hotwords_out = []
     for regex in hotword_regexes:
@@ -116,12 +116,12 @@ def main():
                     "copepods", "plants", "terrestrial", "temporal", "desert", "tropical rainforest",
                     "rainforest", "taiga", "grassland", "tundra", "river", "stream", "forest", 
                     "temperate", "temperate forest", "CO1", "cave"])
-   
+    
     hotword_regexes = []
     for hotword in hotwords:
         hotword_regexes.append(re.compile(re.escape(hotword), flags=re.IGNORECASE))
 
-    docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")[-20:]
+    docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")
     docs_list = ["".join(["/media/wkg/storage/FUSE/pubmed_bulk/", doc]) for doc in docs_list]
 
     with open("relevant_metadata", "w") as out:
