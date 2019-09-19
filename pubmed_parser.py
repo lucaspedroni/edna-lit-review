@@ -140,8 +140,7 @@ def main():
     with open("relevant_metadata", "w") as out:
         for doc in tqdm(docs_list):
             for doc_metadata in parse_doc(doc, regex_sets, stop_words):
-                doc_hotwords = ",".join(doc_metadata[2])
-                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_hotwords, doc_metadata[3]]))
+                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_metadata[2], doc_metadata[3]]))
                 out.write("\n")
 
 if __name__ == "__main__":
