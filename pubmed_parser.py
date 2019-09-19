@@ -108,6 +108,11 @@ def main():
         for line in handle:
             organisms.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
 
+    common_names = []
+    with open("org_list_common_names", "r") as handle:
+        for line in handle:
+            common_names.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+
     countries = []
     with open("countries", "r") as handle:
         for line in handle:
@@ -129,7 +134,7 @@ def main():
             sample_microenv.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
     
     hotwords = ["mammals", "fish", "amphibians", "birds", "bryophytes", "arthropods",
-                    "copepods", "plants"]
+                    "copepods", "plants", "reptiles", "insects"]
     
     hotwords = [re.compile(re.escape(hotword), flags=re.IGNORECASE) for hotword in hotwords]
 
