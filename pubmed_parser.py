@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import os
 import re
-from nltk.corpus import stopwords
+from pathlib import Path
 
+#########################
+## for testing
+from nltk.corpus import stopwords
 from tqdm import tqdm
 
 def get_hotwords(regex_sets, stop_words, title, abstract):
@@ -42,6 +45,7 @@ def parse_doc(doc, regex_sets, stop_words):
     journal_start = re.compile(r"\s*<Journal>")
     journal_stop = re.compile(r"\s*</Journal>")
     journal_name = re.compile(r"\s*<Title>(.+)</Title")
+    pub_year = re.compile(r"\s*<Year>(\d+)</Year>")
     article_title = re.compile(r"\s*<ArticleTitle>(.+)</ArticleTitle")
     abstract_start = re.compile(r"\s*<Abstract>")
     abstract_stop = re.compile(r"\s*</Abstract>")
@@ -53,6 +57,7 @@ def parse_doc(doc, regex_sets, stop_words):
     title = ""
     journal = ""
     term_ids = []
+    year = ""
 
     with open(doc, "r") as handle:
         line = handle.readline()
@@ -60,9 +65,11 @@ def parse_doc(doc, regex_sets, stop_words):
             if article_start.search(line):
                 if doc_pmid:
                     if edna.search(title) or edna.search(abstract):
+                    # for testing only
+#                    if True:
                         hotwords_out = get_hotwords(regex_sets, stop_words, title, abstract)
                         term_ids = ",".join(term_ids)
-                        yield (doc_pmid, journal, hotwords_out, term_ids)
+                        yield (doc_pmid, journal, year, hotwords_out, term_ids)
 
                     # reset vars
                     doc_pmid = ""
@@ -70,6 +77,7 @@ def parse_doc(doc, regex_sets, stop_words):
                     abstract = ""
                     title = ""
                     term_ids = []
+                    year = ""
 
                 while not article_stop.search(line):
                     if not doc_pmid and pmid.search(line):
@@ -85,6 +93,9 @@ def parse_doc(doc, regex_sets, stop_words):
                             journal_match = journal_name.search(line)
                             if journal_match and journal_match.group(1):
                                 journal = journal_match.group(1)
+                            year_match = pub_year.search(line):
+                            if year_match and year_match.group(1):
+                                year = year_match.group(1)
                             line = handle.readline()
                     if article_title.search(line):
                         title = article_title.search(line).group(1)
@@ -101,7 +112,10 @@ def parse_doc(doc, regex_sets, stop_words):
             line = handle.readline()
 
 def main():
+    #########################
+    # for testing
     stop_words = set(stopwords.words("english"))
+    #stop_words = set(["this", "the", "a", "an", "and", "but", "that", "there"]) 
     
     organisms = []
     with open("clean_org_list", "r") as handle:
@@ -139,13 +153,20 @@ def main():
     hotwords = [re.compile(re.escape(hotword), flags=re.IGNORECASE) for hotword in hotwords]
 
     regex_sets = [organisms, countries, biomes, tech, sample_microenv, hotwords]
-    docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")
-    docs_list = ["".join(["/media/wkg/storage/FUSE/pubmed_bulk/", doc]) for doc in docs_list]
+#    docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")
+#    docs_list = ["".join(["/media/wkg/storage/FUSE/pubmed_bulk/", doc]) for doc in docs_list]
+
+    doc_dir = "test_docs"
+    docs_list = os.listdir(doc_dir)
+    containing_dir - Path(doc_dir).resolve()
+    
+    docs_list = [os.path.join(containing_dir, doc) for doc in docs_list]
 
     with open("relevant_metadata", "w") as out:
         for doc in tqdm(docs_list):
             for doc_metadata in parse_doc(doc, regex_sets, stop_words):
-                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_metadata[2], doc_metadata[3]]))
+                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_metadata[2], 
+                    doc_metadata[3], doc_metadata[4]))
                 out.write("\n")
 
 if __name__ == "__main__":
