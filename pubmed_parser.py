@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 
 from tqdm import tqdm
 
-def get_hotwords(hotword_regexes, stop_words, title, abstract):
+def get_hotwords(regex_sets, stop_words, title, abstract):
     # clean up data
     chars = set(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
     
@@ -21,15 +21,18 @@ def get_hotwords(hotword_regexes, stop_words, title, abstract):
 
     clean_words = " ".join(clean_words)
 
-    hotwords_out = []
-    for regex in hotword_regexes:
-        if regex.search(clean_words):
-            hotwords_out.append(regex.search(clean_words).group())
+    out = []
+    for regex_set in regex_sets:
+        regex_hits = []
+        for regex in regex_set:
+            if regex.search(clean_words):
+                regex_hits.append(regex.search(clean_words).group())
+        regex_hits = ",".join(regex_hits)
+        out.append(regex_hits)
 
-    return hotwords_out
+    return "\t".join(out)
 
-
-def parse_doc(doc, hotword_regexes, stop_words):
+def parse_doc(doc, regex_sets, stop_words):
     article_start = re.compile(r"\s*<PubmedArticle>")
     article_stop = re.compile(r"\s*</PubmedArticle>")
     pmid = re.compile(r"\s*<PMID.*>(\d*)</PMID>")
@@ -57,8 +60,10 @@ def parse_doc(doc, hotword_regexes, stop_words):
             if article_start.search(line):
                 if doc_pmid:
                     if edna.search(title) or edna.search(abstract):
-                        hotwords_out = get_hotwords(hotword_regexes, stop_words, title, abstract)
-                        yield (doc_pmid, journal, hotwords_out)
+                        hotwords_out = get_hotwords(regex_sets, stop_words, title, abstract))
+                        term_ids = ",".join(term_ids)
+                        yield (doc_pmid, journal, hotwords_out, term_ids)
+
                     # reset vars
                     doc_pmid = ""
                     journal = ""
@@ -69,12 +74,12 @@ def parse_doc(doc, hotword_regexes, stop_words):
                 while not article_stop.search(line):
                     if not doc_pmid and pmid.search(line):
                         doc_pmid = pmid.search(line).group(1)
-#                    if mesh_list_start.search(line):
-#                        while not mesh_list_stop.search(line):
-#                            mesh_match = mesh_term_id.search(line)
-#                            if mesh_match and mesh_match.group(1):
-#                                term_ids.append(mesh_match.group(1))
-#                            line = handle.readline()
+                    if mesh_list_start.search(line):
+                        while not mesh_list_stop.search(line):
+                            mesh_match = mesh_term_id.search(line)
+                            if mesh_match and mesh_match.group(1):
+                                term_ids.append(mesh_match.group(1))
+                            line = handle.readline()
                     if journal_start.search(line):
                         while not journal_stop.search(line):
                             journal_match = journal_name.search(line)
@@ -98,37 +103,45 @@ def parse_doc(doc, hotword_regexes, stop_words):
 def main():
     stop_words = set(stopwords.words("english"))
     
-    hotwords = []
+    organisms = []
     with open("clean_org_list", "r") as handle:
         for line in handle:
-            hotwords.append(line.strip("\n"))
+            organisms.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
 
     countries = []
     with open("countries", "r") as handle:
         for line in handle:
-            countries.append(line.strip("\n"))
-    hotwords.extend(countries)
+            countries.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
 
-    hotwords.extend(["soil", "16S", "18S", "metabarcoding", "barcoding", "COI",
-                    "sediment", "saltwater", "freshwater", "ice", "glacial",
-                    "floodplain", "water", "PCR", "biodiversity", "high-throughput sequencing",
-                    "mammals", "fish", "amphibians", "birds", "bryophytes", "arthropods",
-                    "copepods", "plants", "terrestrial", "temporal", "desert", "tropical rainforest",
-                    "rainforest", "taiga", "grassland", "tundra", "river", "stream", "forest", 
-                    "temperate", "temperate forest", "CO1", "cave"])
+    biomes = []
+    with open("biomes", "r") as handle:
+        for line in handle:
+            biomes.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+
+    tech = []
+    with open("experimental_tech", "r") as handle:
+        for line in handle:
+            tech.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+
+    sample_microenv = []
+    with open("sample_types", "r") as handle:
+        for line in handle:
+            sample_microenv.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
     
-    hotword_regexes = []
-    for hotword in hotwords:
-        hotword_regexes.append(re.compile(re.escape(hotword), flags=re.IGNORECASE))
+    hotwords = ["mammals", "fish", "amphibians", "birds", "bryophytes", "arthropods",
+                    "copepods", "plants"]
+    
+    hotwords = [re.compile(re.escape(hotword), flags=re.IGNORECASE) for hotword in hotwords]
 
+    regex_sets = [organisms, countries, biomes, tech, sample_microenv, hotwords]
     docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")
     docs_list = ["".join(["/media/wkg/storage/FUSE/pubmed_bulk/", doc]) for doc in docs_list]
 
     with open("relevant_metadata", "w") as out:
         for doc in tqdm(docs_list):
-            for doc_metadata in parse_doc(doc, hotword_regexes, stop_words):
+            for doc_metadata in parse_doc(doc, regex_sets, stop_words):
                 doc_hotwords = ",".join(doc_metadata[2])
-                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_hotwords]))
+                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_hotwords, doc_metadata[3]))
                 out.write("\n")
 
 if __name__ == "__main__":
