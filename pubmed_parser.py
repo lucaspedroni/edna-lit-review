@@ -60,7 +60,7 @@ def parse_doc(doc, regex_sets, stop_words):
             if article_start.search(line):
                 if doc_pmid:
                     if edna.search(title) or edna.search(abstract):
-                        hotwords_out = get_hotwords(regex_sets, stop_words, title, abstract))
+                        hotwords_out = get_hotwords(regex_sets, stop_words, title, abstract)
                         term_ids = ",".join(term_ids)
                         yield (doc_pmid, journal, hotwords_out, term_ids)
 
@@ -141,7 +141,7 @@ def main():
         for doc in tqdm(docs_list):
             for doc_metadata in parse_doc(doc, regex_sets, stop_words):
                 doc_hotwords = ",".join(doc_metadata[2])
-                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_hotwords, doc_metadata[3]))
+                out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_hotwords, doc_metadata[3]]))
                 out.write("\n")
 
 if __name__ == "__main__":
