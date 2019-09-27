@@ -3,8 +3,6 @@ import os
 import re
 from pathlib import Path
 
-#########################
-## for testing
 from nltk.corpus import stopwords
 from tqdm import tqdm
 
@@ -65,8 +63,6 @@ def parse_doc(doc, regex_sets, stop_words):
             if article_start.search(line):
                 if doc_pmid:
                     if edna.search(title) or edna.search(abstract):
-                    # for testing only
-#                    if True:
                         hotwords_out = get_hotwords(regex_sets, stop_words, title, abstract)
                         term_ids = ",".join(term_ids)
                         yield (doc_pmid, journal, year, hotwords_out, term_ids)
@@ -93,7 +89,7 @@ def parse_doc(doc, regex_sets, stop_words):
                             journal_match = journal_name.search(line)
                             if journal_match and journal_match.group(1):
                                 journal = journal_match.group(1)
-                            year_match = pub_year.search(line):
+                            year_match = pub_year.search(line)
                             if year_match and year_match.group(1):
                                 year = year_match.group(1)
                             line = handle.readline()
@@ -112,40 +108,43 @@ def parse_doc(doc, regex_sets, stop_words):
             line = handle.readline()
 
 def main():
-    #########################
-    # for testing
     stop_words = set(stopwords.words("english"))
-    #stop_words = set(["this", "the", "a", "an", "and", "but", "that", "there"]) 
     
     organisms = []
     with open("clean_org_list", "r") as handle:
         for line in handle:
-            organisms.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+            item = "".join([r"\b", re.escape(line.strip("\n")), r"\b"])
+            organisms.append(re.compile(item, flags=re.IGNORECASE))
 
     common_names = []
     with open("org_list_common_names", "r") as handle:
         for line in handle:
-            common_names.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+            item = "".join([r"\b", re.escape(line.strip("\n")), r"\b"])
+            common_names.append(re.compile(item, flags=re.IGNORECASE))
 
     countries = []
     with open("countries", "r") as handle:
         for line in handle:
-            countries.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+            item = "".join([r"\b", re.escape(line.strip("\n")), r"\b"])
+            countries.append(re.compile(item, flags=re.IGNORECASE))
 
     biomes = []
     with open("biomes", "r") as handle:
         for line in handle:
-            biomes.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+            item = "".join([r"\b", re.escape(line.strip("\n")), r"\b"])
+            biomes.append(re.compile(item, flags=re.IGNORECASE))
 
     tech = []
     with open("experimental_tech", "r") as handle:
         for line in handle:
-            tech.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+            item = "".join([r"\b", re.escape(line.strip("\n")), r"\b"])
+            tech.append(re.compile(item, flags=re.IGNORECASE))
 
     sample_microenv = []
     with open("sample_types", "r") as handle:
         for line in handle:
-            sample_microenv.append(re.compile(re.escape(line.strip("\n")), flags=re.IGNORECASE))
+            item = "".join([r"\b", re.escape(line.strip("\n")), r"\b"])
+            sample_microenv.append(re.compile(item, flags=re.IGNORECASE))
     
     hotwords = ["mammals", "fish", "amphibians", "birds", "bryophytes", "arthropods",
                     "copepods", "plants", "reptiles", "insects"]
@@ -156,9 +155,9 @@ def main():
 #    docs_list = os.listdir("/media/wkg/storage/FUSE/pubmed_bulk")
 #    docs_list = ["".join(["/media/wkg/storage/FUSE/pubmed_bulk/", doc]) for doc in docs_list]
 
-    doc_dir = "test_docs"
+    doc_dir = "/media/wkg/storage/FUSE/pubmed_bulk"
     docs_list = os.listdir(doc_dir)
-    containing_dir - Path(doc_dir).resolve()
+    containing_dir = Path(doc_dir).resolve()
     
     docs_list = [os.path.join(containing_dir, doc) for doc in docs_list]
 
@@ -166,7 +165,7 @@ def main():
         for doc in tqdm(docs_list):
             for doc_metadata in parse_doc(doc, regex_sets, stop_words):
                 out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_metadata[2], 
-                    doc_metadata[3], doc_metadata[4]))
+                    doc_metadata[3], doc_metadata[4]]))
                 out.write("\n")
 
 if __name__ == "__main__":
