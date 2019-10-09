@@ -1,5 +1,6 @@
 \documentclass[letterpaper, 10pt, hidelinks]{article}
 
+%\usepackage{apacite}
 \usepackage{fullpage}
 \usepackage{hyperref}
 \usepackage{helvet}
@@ -7,6 +8,13 @@
 \usepackage{color}
 \usepackage{soul}
 \usepackage{graphicx}
+\usepackage{titlesec}
+
+\titleformat{\section}
+	{\normalfont\normalsize\bfseries}
+	{}
+	{0pt}
+	{}
 
 \begin{document}
 \section{Introduction}
@@ -23,12 +31,17 @@ eDNA.
 
 Environmental DNA extraction and analysis techniques have been utilized for more than two 
 decades~\cite{Paul1990, Trevors1989, Somerville1989}. As these techniques have become more widely 
-adopted and eDNA research more publicized, researchers have directly adopted the term 
+adopted and eDNA research more publicized, researchers have adopted the term 
 ``environmental DNA'' to describe a set of common tools used to extract, amplify, sequence, and 
 analyze DNA extracted from environmental media. The term became popularized after its 
 increased usage in works related to biodiversity and ecology, most notably research published 
 by Ficetola et al.\ in 2008~\cite{Ficetola2008}. Ficetola et al.\ used eDNA extracted from 
 water samples in order to track American bullfrog presence in different environments.
+
+In 2003, the cytochrome c oxidase I (\emph{COI}) gene was published as a putative 
+gene target for a global, sustainable barcoding identification process to identify 
+animals~\cite{Hebert2003}. \emph{COI}, a mitochondrial gene, is frequently used for 
+barcoding purposes in research. 
 
 \section{Technological Breakthroughs}
 
@@ -36,8 +49,8 @@ High throughput sequencing has allowed for increased identification resolution.
 
 \section{Research Trends}
 
-Ecological biodiversity and invasive species are logical applications for eDNA techniques, and 
-eDNA techniques have consistently been utilized for these tasks. These techniques may be 
+eDNA techniques have been consistently utilized for ecological biodiversity monitoring 
+tasks. These techniques may be 
 readily applied to numerous other tasks and have been creatively applied to 
 a number of different domains. 
 
@@ -46,14 +59,50 @@ organisms including humans~\cite{Turnbaugh2009}, mosquitoes~\cite{Osei-Poku2012}
 dogs~\cite{Swanson2011}. In addition to characterizing organisms' microbiomes, eDNA 
 techniques with fecal samples are being used to characterize organisms' raw diets. 
 Lyke et al.\ used eDNA techniques to identify arthopod families from DNA extracted 
-from redtail and blue monkey fecal samples~\cite{Lyke2019}. Similarly, horseshoe bat 
-insect diets have been categorized using fecal samples~\cite{Aldasoro2019}.
+from redtail and blue monkey fecal samples~\cite{Lyke2019}. Similarly, bat diets 
+have been analyzed using fecal samples~\cite{Aldasoro2019, Razgour2011}. eDNA analysis, 
+with the use of high throughput sequencing, proved particularly useful in Razgour et al.'s 
+work identifying resource partitioning among cryptic (morphologically similar but 
+genetically isolated) bat species~\cite{Razgour2011}. 
 
 \section{Challenges}
 
+The effectiveness of using eDNA for species detection and biodiversity is debated 
+in published research. eDNA techniques have various limitations but are extremely 
+useful for use in environments where morphological identification, either through 
+observation or trapping, is difficult. The efficacy of using eDNA for species 
+identification may vary drastically depending on very specific circumstances. 
+eDNA methods have proved useful in 
+marine environments where fish populations exist among numerous other divers species. Yamamoto 
+et al.\ found that eDNA techniques outperformed visual surveys for detection of 
+marine fish in species-rich coastal areas of Japan~\cite{Yamamoto2017}. However, 
+eDNA analysis may have high potential for false negatives. 
+Trapping survey methods were found to outperform eDNA detection of semi-aquatic 
+snakes in California~\cite{Rose2019}.
+Small populations of 
+solitary organisms in volatile environments may be particularly hard to detect using 
+eDNA. Research regarding DNA detectability in freshwater have produced varying 
+results, with some work showing a sharp dropoff in detectability after a few days 
+but a lower potential for detection for up to two weeks after removal of an organism 
+from an environment~\cite{Dejean2011}. Work examining stream-dwelling salamander 
+eDNA degradation found that less than 1\% of original eDNA concentrations remained 
+three days after removal of salamanders from the site, and eDNA was not at all 
+detectable for samples receiving full sun exposure after eight days~\cite{Pilliod2014}. 
+eDNA has shown to be detectable in flowing waters up to almost 10 km in one 
+case~\cite{Deiner2014}, but these results are clearly the result of the interactions 
+of a huge number of variables. Understanding the variables affecting eDNA degradation 
+and detectability are critical to the development of eDNA methods. There has been 
+research attemping to quantify eDNA degradation under controlled conditions and correlate 
+degradation to variables like biochemical oxygen demand, chlorophyll content, and 
+total eDNA~\cite{Barnes2014}. There is still a great deal of work to be done understanding 
+how environmental conditions may affect eDNA experimental outcomes. For research 
+utilizing eDNA, it may be necessary to perform additional experimental work attempting 
+to quantify and understand eDNA degradation parameters for each specific environment 
+that samples are collected from.
+
 \section{Future Directions}
 
-\bibliography{refs}{}
 \bibliographystyle{plain}
+\bibliography{refs.bib}{}
 
 \end{document}
