@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import re
+import time
 import logging
 from pathlib import Path
 
@@ -51,7 +52,11 @@ def parse_doc(doc, regex_sets, stop_words, doc_totals, logger):
     abstract_start = re.compile(r"\s*<Abstract>")
     abstract_stop = re.compile(r"\s*</Abstract>")
     abstract_text = re.compile(r"\s*<AbstractText.*>(.*)</AbstractText")
-    edna = re.compile(r"[Ee]nvironmental DNA")
+    #edna = re.compile(r"([Ee]nvironmental DNA)|(DNA barcod)")
+#    edna = re.compile(r"[Ee]nvironmental DNA")
+#    barcode = re.compile(r"DNA barcod")
+
+    barcode_mesh_id = "D058893"
 
     doc_pmid = ""
     abstract = ""
@@ -61,14 +66,16 @@ def parse_doc(doc, regex_sets, stop_words, doc_totals, logger):
     year = ""
 
     doc_count = 0
-
+    
+    start_time = time.perf_counter()
     with open(doc, "r") as handle:
         line = handle.readline()
         while line:
             if article_start.search(line):
                 doc_count += 1
                 if doc_pmid:
-                    if edna.search(title) or edna.search(abstract):
+                    #if edna.search(title) or edna.search(abstract) or barcode_mesh_id in term_ids:
+                    if barcode_mesh_id in term_ids:
                         hotwords_out = get_hotwords(regex_sets, stop_words, title, abstract)
                         term_ids = ",".join(term_ids)
                         yield (doc_pmid, journal, year, hotwords_out, term_ids)
@@ -113,14 +120,15 @@ def parse_doc(doc, regex_sets, stop_words, doc_totals, logger):
                     line = handle.readline()
             line = handle.readline()
     
-    logger.info(f"parsed: |{doc_count}|")
+    elapsed_time = int((time.perf_counter() - start_time) * 10) / 10.0
+    logger.info(f"parsed: |{doc_count}| articles in {elapsed_time} seconds")
     doc_totals.append(doc_count)
 
 def main():
     # Set up logging
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
-    handler = logging.FileHandler("pubmed_parser.log")
+    handler = logging.FileHandler("pubmed_parser_uids.log")
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -178,7 +186,7 @@ def main():
     
     docs_list = [os.path.join(containing_dir, doc) for doc in docs_list]
 
-    with open("relevant_metadata_w_common_names", "w") as out:
+    with open("relevant_metadata_incl_barcoding_meshterm", "w") as out:
         for doc in tqdm(docs_list):
             for doc_metadata in parse_doc(doc, regex_sets, stop_words, doc_totals, logger):
                 out.write("\t".join([doc_metadata[0], doc_metadata[1], doc_metadata[2], 
