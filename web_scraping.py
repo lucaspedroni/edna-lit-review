@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
+import re
+import sys
+import logging
+import traceback
 
+import requests
+import scholarly
+from bs4 import BeautifulSoup
+    
 def extract_natural_text(soup):
         text = [" ".join([str(it).strip() for it in item.contents]) for item in soup]
         text = [remove_tags(item) for item in text if item and item != " " 
@@ -22,15 +30,7 @@ def remove_tags(string):
     
     return "".join(out)
 
-if __name__ == "__main__":
-    import re
-    import sys
-    import logging
-    
-    import requests
-    import scholarly
-    from bs4 import BeautifulSoup
-    
+if __name__ == "__main__":   
     # Set up logging
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
