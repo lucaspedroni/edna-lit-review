@@ -12,27 +12,29 @@ import requests
 import scholarly
 from bs4 import BeautifulSoup
 
-# TODO: returning disallowed for some domains that should be allowed, see logs
-def robots_allowed(url, checked_netlocs, logger):
+def robots_allowed(url, logger):
+    # robotparser has issues with this path for some reason. 
+    # This path is allowed and has lots of articles, so doing this manually
+    if re.search(r"onlinelibrary\.wiley\.com/doi/abs/", url):
+        return True
+    
     # extract base domain
     netloc = urlparse(url).netloc
+    
+    robot_parser = urllib.robotparser.RobotFileParser()
+    robot_parser.set_url(f"http://{netloc}/robots.txt")
+    robot_parser.read()
 
-    if netloc not in checked_netlocs:
-        robot_parser = urllib.robotparser.RobotFileParser()
-        robot_parser.set_url(f"http://{netloc}/robots.txt")
-        robot_parser.read()
-
-        if robot_parser.can_fetch("*", url):
-            checked_netlocs.append(netloc)
-            return True
-        else:
-            logger.info(f"Disallowed from {netloc}, {url}")
-            return False
-    else:
+    if robot_parser.can_fetch("*", url):
         return True
+    else:
+        logger.info(f"Disallowed from {netloc}, {url}")
+        return False
 
-def extract_natural_text(soup):
-        text = [" ".join([str(it).strip() for it in item.contents]) for item in soup]
+def extract_natural_text(result):
+        soup = BeautifulSoup(result.content, features="html5lib")
+        text = soup.find_all("p")
+        text = [" ".join([str(it).strip() for it in item.contents]) for item in text]
         text = [remove_tags(item) for item in text if item and item != " " 
                 and not item.startswith("<a")]
         text = list(dict.fromkeys(text))
@@ -58,7 +60,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     handler = logging.FileHandler("gs_webscraper.log")
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("DEBUG%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
@@ -72,8 +74,6 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read("scraper.cfg")
 
-    checked_netlocs = []
-
     valid_text = re.compile(r"[Ee]nvironmental|DNA")
     
     headers = requests.utils.default_headers()
@@ -83,10 +83,7 @@ if __name__ == "__main__":
     
     # Check timing of requests
     last_req = time.perf_counter()
-#    texts = []
-#    authors = []
-#    titles = []
-#    cit_counts = []
+
     with open("gs_scrape_results", "w") as out:
         for query_result in query:
             try:
@@ -98,13 +95,12 @@ if __name__ == "__main__":
                 cit_count = query_result.citedby
                 url = query_result.bib['url']
 
-                if robots_allowed(url, checked_netlocs, logger):
+                if robots_allowed(url, logger):
                     result = requests.get(url, headers=headers)
                     
-                    soup = BeautifulSoup(result.content, features="html5lib")
-                    text = extract_natural_text(soup.find_all("p"))
-                    
-                    # more validation here:
+                    text = extract_natural_text(result)
+
+                    # maybe need more validation at this step:
                     if valid_text.search(text):
                         out.write("\t".join([author, title, str(cit_count), text]))
                         out.write("\n")
@@ -116,7 +112,4 @@ if __name__ == "__main__":
                 trace = traceback.format_exc()
                 logger.error(repr(e))
                 logger.critical(trace)
-    #            texts.append(text)
-    #            authors.append(author)
-    #            titles.append(title)
-    #            cit_counts.append(cit_count)
+
