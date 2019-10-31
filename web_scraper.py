@@ -34,13 +34,19 @@ def robots_allowed(url, logger):
 def extract_natural_text(result):
         soup = BeautifulSoup(result.content, features="html5lib")
         text = soup.find_all("p")
-        text = [" ".join([str(it).strip() for it in item.contents]) for item in text]
-        text = [remove_tags(item) for item in text if item and item != " " 
+        # transform from BS4 object to string
+        text = [" ".join([str(it) for it in item.contents]) for item in text]
+        # remove tags, leading/trailing whitespace, etc
+        text = [remove_tags(item).strip() for item in text if item and item != " " 
                 and not item.startswith("<a")]
+        # remove excess whitespace
+        text = [" ".join(item.split()) for item in text]
         text = list(dict.fromkeys(text))
+        # remove PLOS One indexing questions
+        text = [item for item in text if not re.search("Is the Subject Area.*applicable to this article\?", item)]
         
         # could be additional validation step here
-        return " ".join([item for item in text if len(item) > 25])
+        return " ".join([item for item in text if len(item) > 35])
         
 def remove_tags(string):
     out = []
@@ -60,7 +66,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     handler = logging.FileHandler("gs_webscraper.log")
-    formatter = logging.Formatter("DEBUG%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
